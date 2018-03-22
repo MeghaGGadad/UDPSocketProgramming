@@ -1,0 +1,14 @@
+One of the features of CoAP protocal which supports both unicast and multicast.
+CoAP supports making requests to an IP multicast group. This is defined by a series of deltas to unicast CoAP as defined 
+in https://tools.ietf.org/pdf/rfc7252.pdf.
+CoAP endpoints that offer services that they want other endpoints to be able to find using multicast service discovery join one or 
+more of the appropriate all-CoAP-node multicast addresses (Section 12.8) and listen on the default CoAP port. 
+#UDPMulticastServer
+
+This server is a time server(displays the current time and port) that will helps to broadcast the current data and time every second. 
+This is a good use for multicast messages as there may be multiple clients interested in the same information, 
+and where reliability is not a major concern
+
+#UDPMulticastClient
+This application will join the multicast group as defined by the address 228.5.6.7.
+It will block until a message is received, and then it will display the message.
