@@ -17,13 +17,13 @@ public class Options {
 		/*This is a constructor for a new option with a given number, based on a
 		 * given byte array
 		 * 
-		 * @param value The byte array
+		 * @param random The byte array
 		 * @param num The option number
 		 * 
 		 * @return A new option with a given number based on a byte array
 		 */
-		public Options (byte[] ran, int num) {
-			setValue(ran);
+		public Options (byte[] random, int num) {
+			setValue(random);
 			setOptionNum(num);
 		}
 		
@@ -109,6 +109,27 @@ public class Options {
 			}
 		}
 		
+		
+		/*
+		 * This method returns the value of the option's data as integer
+		 * 
+		 * @return The integer representation of the current option's data
+		 */
+		public int getIntValue () {
+			int byteLength = value.capacity();
+			ByteBuffer temp = ByteBuffer.allocate(4);
+			for (int i=0; i < (4-byteLength); i++) {
+				temp.put((byte)0);
+			}
+			for (int i=0; i < byteLength; i++) {
+				temp.put(value.get(i));
+			}
+			
+			int val = temp.getInt(0);
+			return val;
+		}
+		
+		
 		public int getOptionNumber() {
 		return optionNum;
 	}
@@ -127,9 +148,12 @@ public class Options {
 			return null;
 		}
 
+		/*This method returns the length of the option's data in the ByteBuffer
+		 *
+		 */ 
+		 
 		public Object getLength() {
-			// TODO Auto-generated method stub
-			return null;
+			return value.capacity();
 		}
 
 	

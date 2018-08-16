@@ -1,20 +1,18 @@
 package org.hvl.CoAPClient;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.hvl.CoAP.CoAPOptionRegistry;
-import org.hvl.CoAP.MessageFormat;
-import org.hvl.CoAP.Options;
 import org.hvl.CoAP.CoAPCodeRegistries;
 import org.hvl.CoAP.CoAPCodeRegistries.Code;
 import org.hvl.CoAP.CoAPCodeRegistries.Type;
+import org.hvl.CoAP.CoAPOptionRegistry;
+import org.hvl.CoAP.MessageFormat;
 import org.hvl.CoAPServer.HandelResponse;
 import org.hvl.CoAPServer.Response;
+
 
 
 
@@ -26,46 +24,44 @@ public class Request extends MessageFormat {
 	private int responseCount;
 	//public void setUriHost(String host);
 	
+	Request request;
 	// list of response handlers that are notified about incoming responses
 	private List<HandelResponse> responseHandlers;
 	
-	private static final long startTime = System.currentTimeMillis();
+	//private static final long startTime = System.currentTimeMillis();
 	
-	/** The current response for the request. */
+	/** To indicate current response for the request. */
 	private Response response;
 	
-	/** The lock object used to wait for a response. */
+	/** This object used to wait for a response. */
 	private Object lock;
 	
 	/** The request code. */
 	private CoAPCodeRegistries.Code code;
 	
 		
-	// Constructors ////////////////////////////////////////////////////////////
+	// Constructors 
 		
 	public Request(Code code) {
 		super();
 		this.code = code;
 	}
 		
-	/* Constructor for a new CoAP message
+	/* Constructor for a upcoming new CoAP messages
 	 * @param code The method code of the message
 	 * @param confirmable True if the request is to be sent as a CON
 	 */ 
 		public Request(int code, boolean confirmable) {
 			//this.code = code;
 			super(confirmable ? 
-				Type.CON : Type.NON, 
-				code);
+				Type.CON : Type.NON, code);
 		}
 		
-		
-		/* This method 
-		 * places a new response to this request, 
+		/* This method places a new response to this request, 
 		 * 
 		 * @param response A response to the request
 		 */
-		public void respond(Response response) {
+		public void respondback(Response response) {
 			
 			// assign response to the request
 			response.setRequest(this);
@@ -84,30 +80,12 @@ public class Request extends MessageFormat {
 					// uses the piggy-backed response
 					response.setType(Type.ACK);
 				} else {
-					// use separate response:
+					// use separate response depending on the type:
 					// CON response to CON request, 
 					// NON response to NON request
 					response.setType(getType());
 				}
 			}
-			
-			
-			
-			// check observe option
-			
-			Options observeOpt = getFirstOption(CoAPOptionRegistry.OBSERVE);
-			if (observeOpt != null && !response.hasOption(CoAPOptionRegistry.OBSERVE)) {
-				
-				// 16-bit second counter
-				int secs = (int)((System.currentTimeMillis() - startTime) / 1000) & 0xFFFF;
-				
-				response.setOption(new Options(secs, CoAPOptionRegistry.OBSERVE));
-				
-				if (response.isConfirmable()) {
-					response.setType(CoAPCodeRegistries.Type.NON);
-				}
-			}
-
 			++responseCount;
 		}
 			
@@ -119,33 +97,27 @@ public class Request extends MessageFormat {
 		 * @throws InterruptedException
 		 *             the interrupted exception
 		 */
-		public Response waitForResponse() throws InterruptedException {
+		/*public Response waitForResponse() throws InterruptedException {
 			return waitForResponse(0);
-		}	
+		}*/	
 		
-	private Response waitForResponse(int i) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-
-	public void respond(int code, String message) {
+       public void respondback(int code, String message) {
 			Response response = new Response(code);
 			if (message != null) {
 				response.setPayload(message);
 			}
-			respond(response);
+			respondback(response);
 		}
 
-		public void respond(int code) {
-			respond(code, null);
+		public void respondback(int code) {
+			respondback(code, null);
 		}
 		
 		public void accept() {
 			if (isConfirmable()) {
 				Response ack = new Response(CoAPCodeRegistries.EMPTY_MESSAGE);
 				ack.setType(CoAPCodeRegistries.Type.ACK);
-				respond(ack);
+				respondback(ack);
 			}
 		}
 
@@ -153,12 +125,12 @@ public class Request extends MessageFormat {
 			if (isConfirmable()) {
 				Response rst = new Response(CoAPCodeRegistries.EMPTY_MESSAGE);
 				rst.setType(Type.RST);
-				respond(rst);
+				respondback(rst);
 			}
 		}
 		
 		public void responseCompleted(Response response) {
-			// do nothing
+			System.out.println("Completed");
 		}
 		
 		
@@ -168,13 +140,13 @@ public class Request extends MessageFormat {
 		 */
 		public Response responseReceive() throws InterruptedException {
 			
-			// response queue required to perform this operation
+			// queue needed to perform this operation
 			if (!responseQueueOn()) {
 				System.out.println("WARNING: Responses may be lost, because of  Missing useResponseQueue(true) call, ");
-				enableResponseQueue(true);
+				ResponseQueueEnable(true);
 			}
 			
-			// receive response from queue
+			// receive response from a response queue
 			Response response = responseQueue.take();
 			
 			// return back null if request timed out
@@ -189,15 +161,15 @@ public class Request extends MessageFormat {
 		}
 
 		/*
-		 * Thsi method Registers a handler for responses to this request
+		 * This method Registers a handler for responses to this request
 		 * 
 		 * 
 		 */
-		public void registerResponseHandler(HandelResponse handler) {
+		public void ResponseHandlerRegister(HandelResponse handler) {
 
 			if (handler != null) {
 				
-				// lazy creation of response handler list
+				// creation of response handler list
 				if (responseHandlers == null) {
 					responseHandlers = new ArrayList<HandelResponse>();
 				}
@@ -211,7 +183,7 @@ public class Request extends MessageFormat {
 		 * 
 		 * @param handler The observer to remove from the handler list
 		 */	
-		public void unregisterResponseHandler(HandelResponse handler) {
+		public void ResponseHandlerUnregister(HandelResponse handler) {
 
 			if (handler != null && responseHandlers != null) {
 				
@@ -220,46 +192,47 @@ public class Request extends MessageFormat {
 		}
 
 		/*
-		 * Enables or disables the response queue
+		 * Method to Enable or disable the response queue
 		 * 
-		 * Implementation NOTE: The response queue needs to be ON/enabled BEFORE 
-		 *       calls to receiveResponse()
+		 *  NOTE: The response queue must be ON/enabled before making  
+		 *       calls to responseReceive()
 		 * 
-		 * @param enable True to enable and false to disable the response queue,
+		 * @param enable True to make enable and false to disable the response queue,
 		 * respectively
 		 */
-		public void enableResponseQueue(boolean enable) {
+		public void ResponseQueueEnable(boolean enable) {
 			if (enable != responseQueueOn()) {
 				responseQueue = enable ? new LinkedBlockingQueue<Response>() : null;
 			}
 		}
 		
 		/*
-		 * Checks if the response queue is enabled
+		 * To check if the response queue is enabled
 		 * 
-		 * NOTE: The response queue needs to be enabled BEFORE any possible
-		 *       calls to receiveResponse()
+		 * NOTE: The response queue must be enabled BEFORE any possible
+		 *       calls to responseReceive()
 		 * 
-		 * @return True iff the response queue is enabled
+		 * @return True iff the response queue is enabled, otherwise false
 		 */	
 		public boolean responseQueueOn() {
-			return responseQueue != null;
+		if(responseQueue != null)
+		    return true;
+		else
+			return false;
 		}	
-		
-		
 		
 		/*
 		 * This method is called whenever a response was placed to this request.
-		 * Subclasses can override this method in order to handle responses.
+		 * other classes can override this method in order to handle responses.
 		 * 
 		 * @param response The response to handle
 		 */
-		public void handleResponse(Response response) {
+		public void responseHandel(Response response) {
 
-			// enqueue response
+			// add the response
 			if (responseQueueOn()) {
 				if (!responseQueue.offer(response)) {
-					System.out.println("ERROR: Failed to enqueue response to request");
+					System.out.println("ERROR: Failed to add response to request");
 				}
 			}
 		
@@ -272,25 +245,6 @@ public class Request extends MessageFormat {
 
 		}
 		
-		/*public void responsePayloadAppended(Response response, byte[] block) {
-			// do nothing
-		}*/
-		
-		/*public void responseCompleted(Response response) {
-			// do nothing
-		}*/
-		
-		/*
-		 * Direct subclasses need to override this method in order to invoke
-		 * the according method of the provided RequestHandler (visitor pattern)
-		 * 
-		 * @param handler A handler for this request
-	 */
-		public void dispatch(HandelResponse handler) {
-			System.out.printf("Unable to dispatch request with code '%s'", 
-				CoAPCodeRegistries.toString(getCode()));
-		}
-		
 		/*@Override
 		public void handleBy(HandelMessage handler) {
 			handler.handleRequest(this);
@@ -298,65 +252,60 @@ public class Request extends MessageFormat {
 		
 		
 		
-		public void setToken(byte[] bs) {
+		/*public void setToken(byte[] bs) {
 			// TODO Auto-generated method stub
 			
-		}
+		}*/
 
 
-		public Object send() {
+		/*public Object send() {
 			// TODO Auto-generated method stub
 			return null;
-		}
+		}*/
 		
 		/**
-		 * This is a convenience method to set the reques's options for host, port
-		 * and path with a string of the form
+		 * This method to set the request's options for host, port
+		 * and path with a string in the following format
 		 * <code>[scheme]://[host]:[port]{/resource}*?{&amp;query}*</code>
 		 * 
 		 * @param uri the URI defining the target resource
 		 * @return this request
 		 */
-		public boolean setURI(String uri) {
+		/*public Request setURI(String uri) {
 			try {
 				if (!uri.startsWith("coap://") && !uri.startsWith("coaps://"))
 					uri = "coap://" + uri;
-				    setURI(new URI(uri));
-				    return true;
+				   setURI(new URI(uri));
+				   return this; 
 			} catch (URISyntaxException e) {
 				throw new IllegalArgumentException("Failed to set uri "+uri + ": " + e.getMessage());
 			}
-		}
+		}*/
 		
-		public void setUriPath(String uri)
-		{
-			
-		}
+		
 
-
+		private boolean rejected;
+		/* To check whether message is rejected
+		 * 
+		 */
 		public boolean isRejected() {
-			// TODO Auto-generated method stub
-			return false;
+			return rejected;
 		}
 		
-		public Response waitForResponse(long timeout) throws InterruptedException {
-			long before = System.currentTimeMillis();
-			long expired = timeout>0 ? (before + timeout) : 0;
-			// Lazy initialization of a lock
-			if (lock == null) {
-				synchronized (this) {
-					if (lock == null)
-						lock = new Object();
-				}
-			}
-			// wait for response
-			synchronized (lock) {
-				while (this.response == null && !isCanceled() && !isTimedOut() && !isRejected()) {
-					lock.wait(timeout);
-					long now = System.currentTimeMillis();				
+		public Response waitForResponse(long timeout) {
+			long begin = System.currentTimeMillis();
+			long expired = timeout>0 ? (begin + timeout) : 0;
+			while (this.response == null && !isCanceled() && !isTimedOut() && !isRejected()) {
+					try {
+						lock.wait(timeout);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					long currentTime = System.currentTimeMillis();				
 					// timeout expired?
-					if (timeout > 0 && expired <= now) {
-						// break loop since response is still null
+					if (timeout > 0 && expired <= currentTime) {
+						// end loop since response is empty
 						break;
 					}
 				}
@@ -364,54 +313,33 @@ public class Request extends MessageFormat {
 				this.response = null;
 				return r;
 			}
-		}
+		
 
-
-		private boolean isTimedOut() {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-
-		private boolean isCanceled() {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-
-		public static Request newGet() {
-			return new Request(CoAPCodeRegistries.Code.GETRequest); 
-		}
-		/**
-		 * Gets the request code.
-		 *
-		 * @return the code
+		private boolean timedOut;
+		/*To check whether message is timeout
+		 * 
 		 */
-		//public Code getCode() {
-			//return code;
-		//}
-
-		public void setContentType(Object object) {
-			// TODO Auto-generated method stub
-			
+		private boolean isTimedOut() {
+			return timedOut;
 		}
 
-		public Object getObserveOption() {
-			// TODO Auto-generated method stub
-			return null;
+		private boolean canceled;
+		/*To check if message is cancelled
+		 * 
+		 */
+		private boolean isCanceled() {
+			return canceled;
 		}
+
 
 		public void execute() {
 			// TODO Auto-generated method stub
 			
 		}
 
-		public byte[] getPayload() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-		}
+		
+		
 	
 
-
+}
 

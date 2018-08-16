@@ -1,5 +1,7 @@
 package org.hvl.CoAP;
 
+
+
 public class CoAPOptionRegistry {
 
 	//section 12.2. CoAP Option Numbers Registry
@@ -201,6 +203,24 @@ public class CoAPOptionRegistry {
 	 */
 	public static boolean isCacheKey(int optionNumber) {
 		return !isNoCacheKey(optionNumber);
+	}
+	
+	/*
+	 *  method returns an Uri-Host Option with a given IP address 
+	 * corresponding to the given option number
+	 */
+	public static Options getDefaultOption (int optionNumber, String ipAddress) {
+		return new Options (ipAddress, URI_HOST);
+	}
+
+
+	
+	
+	public CoAPOptionRegistry setAccept(int format) {
+		if (format < 0 || format > ((1<<16)-1))
+			throw new IllegalArgumentException("Accept option must be between 0 and "+((1<<16)-1)+" (2 bytes) inclusive");
+		int accept = format;
+		return this;
 	}
 
 }

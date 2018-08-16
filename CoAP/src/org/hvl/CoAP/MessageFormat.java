@@ -12,10 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-
-
-
-
+import org.hvl.CoAPClient.Request;
 
 
 
@@ -26,51 +23,48 @@ public class MessageFormat {
 	// number of bits used for the encoding of the CoAP version field
 	public static final int VERSION_BITS     = 2;
 	
-	/** The token, a 0-8 byte array. */
+	/** The token, a 0-8 byte array.  9-15 are reserved */
 	private byte[] token;
 	
-	// number of bits used for the encoding of the option count field
+	// Bits used for the encoding of the option count field
 	public static final int OPTIONCOUNT_BITS = 4;
 	
-	// number of bits used for the encoding of the message type field
+	// Bits used for the encoding of the message type field
 	public static final int TYPE_BIT        = 2;
 	
-	// number of bits used for the encoding of the request method/response code field
+	// Bits used for the encoding of the request method/response code field
 	public static final int CODE_BITS        = 8;
 	
-	// number of bits used for the encoding of the transaction ID/msg ID
+	// Bits used for the encoding of the transaction ID/msg ID
 	public static final int ID_BITS         = 16;
 	
-	// number of bits used for the encoding of the option delta
+	// Bits used for the encoding of the option delta
 	public static final int OPTIONDELTA_BITS = 4;
 	
-	// number of bits used for the encoding of the base option length field
-	// if all bits in this field are set to one, the extended option length
-	// field is additionally used to encode the option length
+	/** Bits used for the encoding of the base option length field
+	*if all bits in this field are set to one, the extended option length
+	**field is additionally used to encode the option length */
 		public static final int OPTIONLENGTH_BASE_BITS     = 4;
 		
-	// number of bits used for the encoding of the extended option length field
-	// this field is used when all bits in the base option length field 
-	// are set to one
+	/** number of bits used for the encoding of the extended option length field
+	*this field is used when all bits in the base option length field 
+	** are set to one */
 		public static final int OPTIONLENGTH_EXTENDED_BITS = 8;
 		
-		/** The CoAP charset is always UTF-8 */
-		public static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
+		/** The charset for CoAP is UTF-8 */
+	public static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 	
 	//The message's ID
 	
 	private int MID = -1;
 	
-	/** The set of options of this message. */
+	/** options of this message*/
 	private CoAPOptionRegistry options;
-	
-	// checks for duplicate of messages are if they have the same message ID
-		//private MessageFormat duplicate;
 	
 	//The message's code
 	private int code;
 	
-	/** The type. One of {CON, NON, ACK or RST}. */
+	/** The type of the message. One of {CON, NON, ACK or RST}. */
 	private CoAPCodeRegistries.Type Type;
 	
 	int type=0;
@@ -79,17 +73,17 @@ public class MessageFormat {
 	private URI uri;
 	
 	/*
-	 * The message's version. This must be set to 1. Other numbers are reserved
+	 * The message's version. Default message's version set to 1. Other numbers are reserved
 	 * for future versions
 	 */
 	private int version = 1;
 	
-	//The message's payload
+	//The payload of message's 
 	private byte[] payload;
 	
 	private boolean complete;
 	
-	//A time stamp associated with the message
+	//A time stamp of the messages
 		private long timestamp;
 
 	//The message's options
@@ -104,10 +98,10 @@ public class MessageFormat {
 
 		MessageFormat reply = new MessageFormat();
 		
-		/* set message type CON<NON<ACK<RST
-		**return type for confirmable message can be either ACK or RST(page 8) 
-		*When no packets are lost, each Confirmable message elicits exactly 
-		*one return message of type Acknowledgement or type Reset 
+		/** set message type CON<NON<ACK<RST
+		**return type for CON message can be either ACK or RST(page 8) 
+		if no packets are lost, each CON message 
+		*return message of type ACK or RST 
 		*/
 		if (Type == CoAPCodeRegistries.Type.CON) {
 			reply.Type = ack ? 
@@ -116,10 +110,10 @@ public class MessageFormat {
 			reply.Type = CoAPCodeRegistries.Type.NON;
 		}
 		
-		//echo the message ID
+		//prints the message ID
 		reply.MID = this.MID;
 		
-		 //echo token
+		 //prints token
 		//Section 5.3
 		reply.setOption(getFirstOption(CoAPOptionRegistry.TOKEN));;
 		
@@ -175,17 +169,27 @@ public class MessageFormat {
 		}
 	}
 	
+	public boolean hasOption(int optionNumber) {
+		return getFirstOption(optionNumber) != null;
+	}
+	
+	
 	/**
-	 * Returns the size of the payload. 
-	 *
+	 * Get the size of the payload. 
+	 * if payload is not specified return null otherwise return length of payload
 	 * @return the payload size
 	 */
-	public int getPayloadSize() {
-		return payload == null ? 0 : payload.length;
+	public int getpayloadSize() {
+		//return payload == null ? 0 : payload.length;
+        if(payload == null)
+        	return 0;
+        else 
+        	return payload.length;
 	}
 	
 	/**
-	 * Gets the payload in the form of a string. Returns an empty string if no
+	 * Returns the payload in the form of a string. 
+	 * Returns blank string if no
 	 * payload is defined.
 	 */
 	public String getPayloadString() {
@@ -207,7 +211,12 @@ public class MessageFormat {
   		
   		List<Options> list = getOptions(optionNumber);
   		return list != null && !list.isEmpty() ? list.get(0) : null;
-  	}
+  	    //if(list != null && !list.isEmpty())
+  	    	//list.get(0);
+  	    //else
+  	    	//return null;
+	
+	}
       
       public void addOption(Options opt) {
   		
@@ -221,8 +230,8 @@ public class MessageFormat {
       
       
       /**
-  	 * Gets the set of options. If no set has been defined yet, it creates a new
-  	 * one. EmptyMessages should not have any options.
+  	 * This method gets the set of options. If no set has defined,a new
+  	 * one will be created. EmptyMessages will not have any options.
   	 * 
   	 * @return the options
   	 */
@@ -235,6 +244,15 @@ public class MessageFormat {
       public List<Options> getOptions(int optionNumber) {
   		return optionMap.get(optionNumber);
   	}
+      
+      public boolean hasFormat(int mediaType) {
+  		Options opt = getFirstOption(CoAPOptionRegistry.CONTENT_TYPE);
+  		//return opt != null ? opt.getIntValue() == mediaType : false;
+  	    if(opt != null)
+  	    	return opt.getIntValue() == mediaType;
+  	    else 
+  	    	return false;
+      }
 
 	public static MessageFormat newAcknowledgement(MessageFormat msg) {
 		
@@ -277,17 +295,17 @@ public class MessageFormat {
   		return rst;
   	}
   	
-      public boolean setURI(String uri) {
+      public Request setURI(String uri) {
   		try {
   			if (!uri.startsWith("coap://") && !uri.startsWith("coaps://"))
   				uri = "coap://" + uri;
   			
   			setURI(new URI(uri));
-  			return true;
+  		 return (Request) this;
   		} catch (URISyntaxException e) {
   			System.out.printf("[%s] Failed to set URI: %s\n",
   				getClass().getName(), e.getMessage());
-  			return false;
+  			return (Request) this;
   		}
   	}
       
@@ -354,13 +372,13 @@ public class MessageFormat {
   	 * @param id The message ID to which the current message ID should
   	 *           be set to
   	 */
-      public void setID(int id) {
-  		this.MID = id;
+      public int setID(int id) {
+  		return(this.MID = id);
   	}
     
       /*
-  	 * This procedure sets the code of this CoAP message
-  	 * 
+  	 * This methods sets the code of this CoAP message
+  	 * to GET,PUT,POST or DELETE depending on argument passed
   	 * @param code The message code to which the current message code should
   	 *             be set to
   	 */
@@ -374,7 +392,7 @@ public class MessageFormat {
       /*
   	 * This procedure sets the type of this CoAP message
   	 * 
-  	 * @param msgType The message type to which the current message type should
+  	 * @param Type The message type to which the current message type should
   	 *                be set to
   	 */
       public void setType(CoAPCodeRegistries.Type ack) {
@@ -383,55 +401,15 @@ public class MessageFormat {
       
       /*
   	 * This function returns the type of this CoAP message
-  	 * 
+  	 * Confirmable (0), Non-confirmable (1), Acknowledgement (2), or
+     * Reset (3)
   	 * @return The current type.
   	 */
   	public CoAPCodeRegistries.Type getType() {
   		return Type;
   	}
       
-      /*public static MessageFormat fromByteArray(byte[] byteArray) {
-
-  		//Initialize DatagramReader
-  		DatagramReader datagram = new DatagramReader(byteArray);
-  		
-  		//Read current version
-  		int version = datagram.read(VERSION);
-  		
-  		//Read current type
-  		messageType.Type type = getTypeByID(datagram.read(TYPE_BIT));
-  		
-  		//Read number of options
-  		int optionCount = datagram.read(OPTIONCOUNT_BITS);
-  		
-  		//Read code
-  		int code = datagram.read(CODE_BITS);
-  		if (!messageType.isValid(code)) {
-  			System.out.printf("ERROR: Invalid message code: %d\n", code);
-  			return null;
-  		}
-
-  		// create new message with subtype according to code number
-  		MessageFormat msg;
-  		try {
-  			msg = messageType.Code.newInstance();
-  		} catch (InstantiationException e) {
-  			e.printStackTrace();
-  			return null;
-  		} catch (IllegalAccessException e) {
-  			e.printStackTrace();
-  			return null;
-  		}
-  		msg.version = version;
-  		msg.Type = type;
-  		msg.code = code;
-  		
-  		//Read message ID
-  		msg.messageID = datagram.read(ID_BITS);
-  		return msg;
-}*/
-
-     public static CoAPCodeRegistries.Type getTypeByID(int id) {
+      public static CoAPCodeRegistries.Type getTypeByID(int id) {
   		switch (id) {
   			case 0:
   				return CoAPCodeRegistries.Type.CON;
@@ -447,7 +425,7 @@ public class MessageFormat {
   	}
      
      /*
-	 * To checks, if the message is a request message
+	 * To checks, if the message is a request message(0)
 	 * 
 	 * @return True if the message is a request
 	 */
@@ -496,19 +474,18 @@ public void PrintDetail(PrintStream out) {
 		
 		List<Options> options = getOptionList();
 		
-		out.printf("URI    : %s\n", uri != null ? uri.toString() : "NULL");
-		out.printf("ID     : %d\n", MID);
-		//out.printf("Type   : %s\n", typeString());
-		out.printf("Code   : %s\n", CoAPCodeRegistries.toString(code));
-		out.printf("Options: %d\n", options.size());
+		out.printf("URI of the Message   : %s\n", uri != null ? uri.toString() : "NULL");
+		out.printf("ID of the Message   : %d\n", MID);
+		out.printf("Code of the Message  : %s\n", CoAPCodeRegistries.toString(code));
+		out.printf("Options of the Message: %d\n", options.size());
 		for (Options opt : options) {
 			out.printf("  * %s: %s (%d Bytes)\n", 
 				opt.getName(), opt.getDisplayValue(), opt.getLength()
 			);
 		}
-		out.printf("Payload: %d Bytes\n", getPayloadSize());
+		out.printf("Payload: %d Bytes\n", getpayloadSize());
 		out.println("------------------------------------------------------");
-		if (getPayloadSize() > 0) out.println(getPayloadString());
+		if (getpayloadSize() > 0) out.println(getPayloadString());
 		out.println("======================================================");
 		
 	}
@@ -532,47 +509,34 @@ public void PrintDetail(PrintStream out) {
 	 * Notification method that is called when the message's complete flag
 	 * changed to true.
 	 * 
-	 * Subclasses may override this method to add custom handling code.
-	 */
+	 Subclasses may override this method to add custom handling code*/
+	 
 	protected void completed() {
 		// do nothing
 	}
 	
 	
 	
-	protected boolean iscompleted() {
+	/*protected boolean iscompleted() {
 		return complete;
 		
-	}
-	/*check for the empty token
+	}*/
+	/*check for the empty token, if no token specified returns null or token length is zero 
 	 * 
 	 */
-	public boolean hasEmptyToken() {
+	public boolean EmptyToken() {
 		return token == null || token.length == 0;
 	}
 	
-	/**
-	 * Gets the 0--8 byte token.
-	 *@return the token
+	/** This method returns Token of the message
+	 * 
 	 */
 	public byte[] getToken() {
 		return token;
 	}
 	
-	/*
-	 * This Notification method that is called whenever payload was appended
-	 * using the appendPayload() method.
-	 * 
-	 * child classes may override this method to add custom handling code.
-	 * 
-	 * @param block A byte array containing the data that was appended
-	 
-	protected void payloadAppended(byte[] block) {
-		// do nothing
-	}*/
-     
 	public void timedOut() {
-		// do nothing
+		System.out.println("Time out");
 	}
 	
 	/*
@@ -601,10 +565,10 @@ public void PrintDetail(PrintStream out) {
 		return null;
 	}
 	
-	/*
-	 * Sets the timestamp associated with this message.
+	/* This method 
+	 * sets the timestamp for current message.
 	 * 
-	 * @param timestamp The new timestamp, in milliseconds
+	 * @param timestamp, in milliseconds
 	 */
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
@@ -616,9 +580,9 @@ public void PrintDetail(PrintStream out) {
 	
 	
 	/*
-	 * Returns the timestamp associated with this message.
+	 * get the timestamp associated with this message.
 	 * 
-	 * @return The timestamp of the message, in milliseconds
+	 * @return The timestamp , in milliseconds
 	 */
 	public long getTimestamp() {
 		return timestamp;
@@ -627,7 +591,7 @@ public void PrintDetail(PrintStream out) {
 	public String endpointID() {
 		InetAddress address = null;
 		try {
-			address = getAddress();
+			address = getInetAddress();
 		} catch (UnknownHostException e) {
 		}
 		return String.format("%s:%d", 
@@ -636,7 +600,7 @@ public void PrintDetail(PrintStream out) {
 		);
 	}
 	
-	public InetAddress getAddress() throws UnknownHostException {
+	public InetAddress getInetAddress() throws UnknownHostException {
 		return InetAddress.getByName(uri != null ? uri.getHost() : null);
 	}
 	
@@ -644,7 +608,11 @@ public void PrintDetail(PrintStream out) {
 	 * 
 	 */
 	public String key() {
-		return String.format("%s#%d", 
-			endpointID(),MID);
+		return String.format("%s#%d", endpointID(),MID);
 	}
+
+
+	
+	
+	public void setContentType(MediaTypeRegistery mediaType) {}
 }

@@ -4,6 +4,7 @@ public class MediaTypeRegistery {
 	
 	//section 12.3 CoAP Content-Formats Registry
 	public static final int PLAIN             = 0;
+	public static final int LINK_FORMAT       = 40;
 	public static final int XML               = 41;
 	public static final int OCTET_STREAM      = 42;
 	public static final int EXI               = 47;
@@ -11,20 +12,19 @@ public class MediaTypeRegistery {
 	
 	public static final int UNDEFINED = -1;
 	
-	// draft-ietf-core-link-format-04, section 7.4
-	public static final int LINK_FORMAT       = 40;
+	
+	
 	
 	public static boolean isPrintable(int mediaType) {
 		switch (mediaType) {
 		case PLAIN:
+		case LINK_FORMAT:
 		case XML:
 		case OCTET_STREAM:
 		case JSON:
         case UNDEFINED:
 			return true;
-
-		
-		default:
+        default:
 			return false;
 		}
 	}
@@ -50,10 +50,7 @@ public class MediaTypeRegistery {
 	}
 
 
-	public static Object parse(Integer type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 }
 
 

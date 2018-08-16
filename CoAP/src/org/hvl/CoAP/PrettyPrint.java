@@ -8,6 +8,8 @@ import org.hvl.CoAP.MediaTypeRegistery;
 
 public class PrettyPrint {
 	
+	
+	
 	/**
 	 * Formats a {@link Request} into a readable String representation. 
 	 * 
@@ -24,8 +26,8 @@ public class PrettyPrint {
 	        sb.append(String.format("Type   : %s\n", r.getType().toString()));
 	        //sb.append(String.format("Method : %s\n", r.getCode().toString()));
 	        sb.append(String.format("Options: %s\n", r.getOptions().toString()));
-	        sb.append(String.format("Payload: %d Bytes\n", r.getPayloadSize()));
-	        if (r.getPayloadSize() > 0 && MediaTypeRegistery.isPrintable(r.getOptions().getContentFormat())) {
+	        sb.append(String.format("Payload: %d Bytes\n", r.getpayloadSize()));
+	        if (r.getpayloadSize() > 0 && MediaTypeRegistery.isPrintable(r.getOptions().getContentFormat())) {
 	        
 	        	sb.append("---------------------------------------------------------------");
 	        	sb.append(r.getPayloadString());
@@ -52,8 +54,8 @@ public class PrettyPrint {
 	        sb.append(String.format("Type   : %s\n", r.getType().toString()));
 	        //sb.append(String.format("Status : %s\n", r.getCode().toString()));
 	        sb.append(String.format("Options: %s\n", r.getOptions().toString()));
-	        sb.append(String.format("Payload: %d Bytes\n", r.getPayloadSize()));
-	        if (r.getPayloadSize() > 0 && MediaTypeRegistery.isPrintable(r.getOptions().getContentFormat())) {
+	        sb.append(String.format("Payload: %d Bytes\n", r.getpayloadSize()));
+	        if (r.getpayloadSize() > 0 && MediaTypeRegistery.isPrintable(r.getOptions().getContentFormat())) {
 	        	sb.append("---------------------------------------------------------------\n");
 	        	sb.append(r.getPayloadString());
 	        	sb.append("\n");
